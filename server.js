@@ -1,9 +1,11 @@
 const express = require("express");
+const dotenv = require("dotenv");
 const Tesseract = require("tesseract.js");
 const { Configuration, OpenAIApi } = require("openai");
 const multer = require("multer");
 const cors = require("cors");
 
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -12,16 +14,22 @@ app.use(express.urlencoded({ extended: true }));
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.get("/", (req, res) => {
-    res.send("Hello World!");
-    });
+  res.send("Hello World!");
+});
 
-app.post("/process-image", upload.single("image"), async (req, res) => {
-    console.log("req.file", req.file)
+app.post("/process-image", upload.array("image", 10), async (req, res) => {
   try {
-    const { buffer, mimetype } = req.file;
-    const result = await Tesseract.recognize(buffer, "spa", { mime: mimetype });
-    const text = result.data.text;
-    const apiKey = process.env.CHATGPT_API_KEY;
+    const files = req.files;
+    let results = [];
+
+    for (const file of files) {
+      const { buffer, mimetype } = file;
+      const result = await Tesseract.recognize(buffer, "spa", { mime: mimetype });
+      results.push(result.data.text);
+    }
+
+    const combinedText = results.join("\n");
+    const apiKey =  process.env.CHATGPT_API_KEY;
     const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
 
@@ -30,7 +38,7 @@ app.post("/process-image", upload.single("image"), async (req, res) => {
 
     const completion = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: basePrompt + text,
+      prompt: basePrompt + combinedText,
       max_tokens: 1200,
       temperature: 0.3,
     });
