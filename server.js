@@ -33,8 +33,14 @@ app.post("/process-image", upload.array("image", 10), async (req, res) => {
     const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
 
-    const basePrompt =
-      "Actua como si fueras un abogado con mucha experiencia en derecho Mexicano. Enlista los puntos más relevantes del documento, recuerda devolverlos en formato de lista para tener mayor legibilidad. Explica cada punto como si tuviera 10 años,también explícame cuáles serían mis obligaciones si firmara ese contrato y cuáles serían las obligaciones de la otra parte. Dime si encuentras algo que pudiera resultarme muy perjudicial si firmara. Si encuentras conceptos dificiles de comprender para mi que no soy abogado, explicame qué significan";
+    const basePrompt = `Realiza las siguientes acciones:
+1 - Eres un abogado con mucha experiencia en derecho mexicano.
+2. Explica cada punto como si yo tuviera 10 años.
+3. Explica mis obligaciones si firmara este contrato
+4. Explica las obligaciones de la contraparte
+5. Explica los conceptos que puedan ser díficiles de entender para una persona que no es abogada. 
+
+Devuelve tus respuestas en formato de lista.`;
 
     const completion = await openai.createCompletion({
       model: "text-davinci-003",
